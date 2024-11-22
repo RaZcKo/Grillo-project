@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grillo Page</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+
+
+
+    <style>
+        /* Stili di base e layout */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 30px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+        }
+
+        .search-container input {
+            padding: 12px 20px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 30px;
+            border: 2px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: #4CAF50;
+        }
+
+        .input-field {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .input-field:hover {
+            transform: scale(1.02);
+        }
+
+        .input-field input, .input-field textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .input-field textarea {
+            resize: none;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .remove-btn, .save-btn, .edit-btn, .remove-all-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-size: 12px;
+            position: relative;
+            margin-top: 10px;
+            width: 48%;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+        }
+
+        .remove-btn, .remove-all-btn {
+            background-color: #f44336;
+        }
+
+        .remove-btn:hover, .save-btn:hover, .edit-btn:hover, .remove-all-btn:hover {
+            background-color: #e53935;
+            transform: scale(1.1);
+        }
+
+        .edit-btn {
+            background-color: #f0f8ff;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            button {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+            .search-container input {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>BUONA ORDINAZIONE</h1>
+
+        <button class="remove-all-btn" onclick="removeAllFields()">Rimuovi Tutte le Caselle</button>
+
+        <button onclick="addInputField('textarea')">Aggiungi Casella di Testo (Multilinea)</button>
+
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Cerca per titolo..." oninput="searchFields()">
+        </div>
+
+        <div id="inputFieldsContainer"></div>
+    </div>
+
+    <script>
+
+            // Firebase Configurazione
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+
+        // Inizializzazione di Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+
+
+
+
+
+        function addInputField(type) {
+            let container = document.getElementById("inputFieldsContainer");
+            let newField = document.createElement("div");
+            newField.classList.add("input-field");
+
+            let titleField = document.createElement("input");
+            titleField.type = "text";
+            titleField.placeholder = "Titolo della casella";
+            titleField.classList.add("title-field");
+
+            let textField = type === 'textarea' ? document.createElement("textarea") : document.createElement("input");
+            if (type === 'textarea') textField.rows = 4;
+            textField.placeholder = "Scrivi un messaggio...";
+
+            newField.appendChild(titleField);
+            newField.appendChild(textField);
+
+            let saveButton = document.createElement("button");
+            saveButton.textContent = "Salva";
+            saveButton.classList.add("save-btn");
+            saveButton.onclick = function() {
+                saveButton.style.display = "none";
+                editButton.style.display = "inline-block";
+                textField.disabled = true;
+                titleField.disabled = true;
+                saveFieldData(titleField.value, textField.value);
+            };
+
+            let editButton = document.createElement("button");
+            editButton.textContent = "Modifica";
+            editButton.classList.add("edit-btn");
+            editButton.style.display = "none";
+            editButton.onclick = function() {
+                textField.disabled = false;
+                titleField.disabled = false;
+                saveButton.style.display = "inline-block";
+                editButton.style.display = "none";
+            };
+
+            let removeButton = document.createElement("button");
+            removeButton.textContent = "Rimuovi";
+            removeButton.classList.add("remove-btn");
+            removeButton.onclick = function() {
+                if (confirm("Sei sicuro di voler rimuovere questa casella?")) {
+                    container.removeChild(newField);
+                }
+            };
+
+            let buttonsContainer = document.createElement("div");
+            buttonsContainer.classList.add("buttons-container");
+            buttonsContainer.appendChild(saveButton);
+            buttonsContainer.appendChild(editButton);
+            buttonsContainer.appendChild(removeButton);
+
+            newField.appendChild(buttonsContainer);
+            container.appendChild(newField);
+        }
+
+        function saveFieldData(title, content) {
+            let savedFields = JSON.parse(localStorage.getItem("savedFields")) || [];
+            savedFields.push({ title, content });
+            localStorage.setItem("savedFields", JSON.stringify(savedFields));
+        }
+
+        function removeAllFields() {
+            if (confirm("Sei sicuro di voler rimuovere tutte le caselle?")) {
+                let container = document.getElementById("inputFieldsContainer");
+                container.innerHTML = "";
+                localStorage.removeItem("savedFields");
+            }
+        }
+
+        function searchFields() {
+            let searchTerm = document.getElementById("search").value.toLowerCase();
+            let fields = document.querySelectorAll(".input-field");
+            fields.forEach(function(field) {
+                let title = field.querySelector(".title-field").value.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    field.style.display = "block";
+                } else {
+                    field.style.display = "none";
+                }
+            });
+        }
+
+        window.onload = function() {
+            let savedFields = JSON.parse(localStorage.getItem("savedFields")) || [];
+            savedFields.forEach(function(savedField) {
+                addInputField('textarea');
+                document.querySelector(".input-field:last-child .title-field").value = savedField.title;
+                document.querySelector(".input-field:last-child textarea").value = savedField.content;
+            });
+        };
+    </script>
+
+
+
+</body>
+</html>
